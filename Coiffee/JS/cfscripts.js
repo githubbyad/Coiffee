@@ -187,7 +187,7 @@ document.addEventListener("DOMContentLoaded", () => {
 const changeFrameSRC = frame => {
     let appSrv = readCookie("AppServer"); /* get appServer */
     appSrv = appSrv ?? `https://bulletlink.${defaultApp.toLocaleLowerCase()}`;
-    if (frame.src.includes("&pform")) { /* if src is blank */
+    if (!frame.src.includes("&pform")) { /* if src is blank */
         frame.src = appSrv + frame.getAttribute("data-url");
         setTimeout(() => iFrameResize({ log: true }, frame), 1000); /* resize iFrame */
     }
