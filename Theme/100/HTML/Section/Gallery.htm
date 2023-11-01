@@ -1,0 +1,117 @@
+{{LayoutSection71Begin}}
+{{LayoutSection71Limit12}}
+{{Where:SubMenuIdInclude:71}}
+{{File:section71.htm}}
+{{SortBy:Issue,Updated}}
+<html>
+
+    <head>
+        <link rel='stylesheet' href='https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.css'>
+    </head>
+
+    <body>
+
+        <div class="cus-photogallery-100">
+
+            <div class="row mx-0 hp-parent">
+
+                {{RepeatBegin}}
+
+                    <div class="col-6 col-lg-4 mb-2 mb-lg-4 px-1 px-lg-s hpe-in-photo-g" data-article="{{ArticleId}}" data-url="{{HeadingLink}}" data-menu="{{Menu}}" data-submenu="{{SubMenu}}" data-date="{{MonthI}}_{{DayI}}_{{YearI}}">
+
+                        <a class="cus-photogallery-100-popup d-block position-relative" data-fancybox="gallery" data-src="{{HeadingImage}}" data-caption="{{HeadingImageAlt}}" >
+
+                            <div class="ratio ratio-1x1">
+
+                                <div class="img-content cus-dark-img cus-cursor-zoom">
+
+                                    <img class="cus-photogallery-100-img img-fluid lazy loaded" src="{{HeadingImage}}" data-src="{{HeadingImage}}" alt="{{HeadingImageAlt}}" data-was-processed="true">
+
+                                    <div class="cus-photogallery-100-headBody">
+                                        <p class="cus-photogallery-100-heading">{{Heading}}</p>
+                                        <p class="cus-photogallery-100-body">{{Body}}</p>
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        </a>
+
+                    </div>
+
+                {{RepeatEnd}}
+
+            </div>
+
+        </div>
+
+        <style>
+            .cus-photogallery-100-icon {
+                opacity: 0;
+                transition: 200ms linear;
+            }
+
+            .cus-photogallery-100-popup:hover .cus-photogallery-100-icon {
+                opacity: 1;
+                transition: 300ms linear;
+            }
+
+            .cus-photogallery-100-headBody {
+                position: absolute;
+                color: white;
+                z-index: 2;
+                text-align: center;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                opacity: 0;
+                transition: 200ms ease-in-out;
+            }
+
+            .cus-photogallery-100-heading {
+                font-weight: bold;
+                font-size: 1.2rem;
+                margin-bottom: 0;
+                transition: 200ms linear;
+                transform: translateY(10px);
+                opacity: 0;
+            }
+
+            .cus-photogallery-100-body {
+                text-transform: uppercase;
+                font-size: 0.9rem;
+                transition: 200ms linear;
+                transform: translateY(10px);
+                color: #b0b0b0;
+                transition-delay: 100ms;
+                opacity: 0;
+            }
+
+            .cus-photogallery-100-popup:hover .cus-photogallery-100-headBody,
+            .cus-photogallery-100-popup:hover .cus-photogallery-100-heading,
+            .cus-photogallery-100-popup:hover .cus-photogallery-100-body {
+                opacity: 1;
+            }
+
+            .cus-photogallery-100-popup:hover .cus-photogallery-100-heading,
+            .cus-photogallery-100-popup:hover .cus-photogallery-100-body {
+                transform: translateY(0);
+            }
+
+            .cus-photogallery-100-popup .cus-dark-img::after {
+                opacity: 0 !important;
+                transition: 200ms linear;
+            }
+            .cus-photogallery-100-popup:hover .cus-dark-img::after {
+                background: rgba(0, 0, 0, 0.8);                
+                opacity: 1 !important;
+            }
+            </style>
+
+        <script src='https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox.umd.js'></script>
+
+    </body>
+
+</html>
+{{LayoutSection71End}}
