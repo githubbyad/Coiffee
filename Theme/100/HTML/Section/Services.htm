@@ -1,0 +1,20 @@
+{{LayoutSection<<SubMenuId>>Begin}}
+    {{LayoutSection<<SubMenuId>>Limit9}}
+    {{Where:SubMenuIdInclude:<<SubMenuId>>}}
+    {{File:section<<SubMenuId>>.htm}}
+    {{ReplaceJavascriptChars:No}}
+    {{RemoveHTMLBody}}
+    {{RemoveMore:Yes}}
+    {{SortBy:Issue, Updated}}
+        <h2 class="fw-bold text-center h1 mb-4 text-black"><span class="hpe-custom-text-6"><script>Section6();</script></span></h2>
+        <div class="row">
+            {{RepeatBegin}}
+                <div class="col-lg-4 mb-4 hpe-in-prev-heading-body" data-article="{{ArticleId}}" data-url="{{HeadingLink}}" data-menu="{{Menu}}" data-submenu="{{SubMenu}}" data-date="{{MonthI}}_{{DayI}}_{{YearI}}">
+                    <div class="w-100 b-block p-3 shadow rounded">
+                        <p class="text-theme fs-4 fw-bold mb-2">{{Heading}}</p>
+                        <p class="text-gray text-justify mb-0">{{Body}}</p>                             
+                    </div>  
+                </div>
+            {{RepeatEnd}}
+        </div>
+{{LayoutSection<<SubMenuId>>End}}
