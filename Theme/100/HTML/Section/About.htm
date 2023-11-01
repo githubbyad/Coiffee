@@ -1,0 +1,21 @@
+{{LayoutSection<<SubMenuId>>Begin}}
+    {{LayoutSection<<SubMenuId>>Limit1}}
+    {{Where:SubMenuIdInclude:<<SubMenuId>>}}
+    {{File:section<<SubMenuId>>.htm}}
+    {{ReplaceJavascriptChars:No}}
+    {{RemoveHTMLBody}}
+    {{RemoveMore:Yes}}
+    {{SortBy:Issue, Updated}}        
+        {{RepeatBegin}}
+            <div class="row hpe-article-only-heading-body-image" data-article="{{ArticleId}}" data-url="{{HeadingLink}}">
+                    <h2 class="fw-bold h1 mb-4 text-black text-lg-center d-block d-lg-none text-center text-lg-start">{{Heading}}</h2>
+                <div class="col-lg-6 order-2 order-lg-1">
+                    <h2 class="fw-bold h1 mb-4 text-black text-lg-center d-none d-lg-block">{{Heading}}</h2>
+                    <p class="text-gray text-justify mb-0">{{Body}}</p>                        
+                </div>
+                <div class="col-lg-6 order-1 order-lg-2 mb-2 mb-lg-0">
+                    <img src="{{HeadingImage}}" class="img-fluid" alt="{{Heading}}">
+                </div>
+            </div>
+        {{RepeatEnd}}        
+{{LayoutSection<<SubMenuId>>End}}
