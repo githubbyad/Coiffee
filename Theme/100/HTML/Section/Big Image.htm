@@ -1,0 +1,17 @@
+{{LayoutSection<<SubMenuId>>Begin}}
+    {{LayoutSection<<SubMenuId>>Limit1}}
+    {{Where:SubMenuIdInclude:<<SubMenuId>>}}
+    {{File:section<<SubMenuId>>.htm}}
+    {{ReplaceJavascriptChars:No}}
+    {{RemoveHTMLBody}}
+    {{RemoveMore:Yes}}
+    {{SortBy:Issue, Updated}}        
+        {{RepeatBegin}}
+            <div class="row w-100 mx-0 hpe-article-only-heading-image" data-article="{{ArticleId}}" data-url="{{HeadingLink}}">
+                <div class="cus-image-scroller px-0" style="background-image: url('{{HeadingImage}}');">
+                    <div class="w-100 d-block d-lg-none"><img class="img-fluid" src="{{HeadingImage}}" alt="{{Heading}}"></div>
+                    <p class="cus-big-image-heading mb-0">{{Heading}}</p>
+                </div>
+            </div>
+        {{RepeatEnd}}
+{{LayoutSection<<SubMenuId>>End}}
