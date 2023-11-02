@@ -1,3 +1,35 @@
 .hpx-main {
 	display: none;
 }
+.sm-hp {
+    color: white !important;
+    font-family: Trebuchet MS !important;
+    background: rgba(0, 0, 0, 0.4);
+    line-height: 40px;
+    display: block;
+    padding: 0 20px;
+    float: left;
+    transition: 300ms linear;
+    font-weight: bold !important;
+    background-image: linear-gradient(90deg, #fff 50%, transparent 50%), linear-gradient(90deg, #fff 50%, transparent 50%), linear-gradient(0deg, #fff 50%, transparent 50%), linear-gradient(0deg, #fff 50%, transparent 50%);
+    background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+    background-size: 15px 1px, 15px 1px, 1px 15px, 1px 15px;
+    background-position: left top, right bottom, left bottom, right top;
+    animation: hpe-border 1200ms infinite linear;
+}
+
+.sm-hp:hover {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.6) 50%, rgba(0, 0, 0, 0.4) 100%);
+    transition: 200ms linear;
+    color: white !important;
+    font-weight: bold !important;
+}
+@keyframes hpe-border {
+    0% {
+        background-position: left top, right bottom, left bottom, right top;
+    }
+
+    100% {
+        background-position: left 15px top, right 15px bottom, left bottom 15px, right top 15px;
+    }
+}
