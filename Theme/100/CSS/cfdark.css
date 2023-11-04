@@ -1,0 +1,32 @@
+/* dark theme */
+html[data-theme="dark"] i[data-theme="dark"] {
+    display: none !important;
+}
+
+html[data-theme="dark"] i[data-theme="light"] {
+    display: inline !important;
+}
+
+html[data-theme="dark"] .bg-white,
+html[data-theme="dark"] .cus-top-link,
+html[data-theme="dark"] [data-bg="white"] {
+    background-color: #212529 !important;
+}
+
+html[data-theme="dark"] .text-black {
+    color: #fff !important;
+}
+
+html[data-theme="dark"] .text-theme {
+    color: var(--themeColor) !important;
+}
+
+html[data-theme="dark"] .text-gray {
+    color: #ddd !important;
+}
+
+html[data-theme="dark"] .cf-loader::before {
+    border-color: #FFF;
+}
+
+/* /dark theme */
