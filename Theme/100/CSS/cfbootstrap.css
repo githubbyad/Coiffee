@@ -1,0 +1,33 @@
+.bg-inset {
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.2) 60%);
+}
+
+.text-justify {
+    text-align: justify;
+}
+
+[data-bg="white"] {
+    background-color: #fff !important;
+}
+
+a {
+    text-decoration: none;
+}
+
+.bg-dark-500 {
+    background-color: #343a40 !important;
+}
+
+.text-theme,
+html[data-theme="dark"] .text-theme {
+    color: var(--themeColor) !important;
+}
+
+.vr {
+    display: inline-block;
+    align-self: stretch;
+    width: 1px;
+    min-height: 1rem;
+    background-color: currentcolor;
+    opacity: .25;
+}
