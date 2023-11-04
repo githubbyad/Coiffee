@@ -139,6 +139,11 @@
     }
 }
 
+.form-button {
+    background: var(--themeColor) !important;
+    border-color: var(--themeColor) !important;
+}
+
 /* / general css */
 
 
