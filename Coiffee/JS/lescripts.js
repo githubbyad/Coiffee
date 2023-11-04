@@ -32,7 +32,7 @@ const addSelectText = (id, text, num) => {
         if (num) {
             document.querySelector(`#${id} option:nth-child(${num})`).innerText = `-- Select ${text} --`;
             document.querySelector(`#${id} option:nth-child(${num}`).setAttribute("disabled", true);
-        } else {
+        } else if (document.querySelector(`#${id} option`).innerText.trim() == "") {
             document.querySelector(`#${id} option`).innerText = `-- Select ${text} --`;
             document.querySelector(`#${id} option`).setAttribute("disabled", true);
         }
@@ -67,6 +67,18 @@ const stringInURL = str => {
     if (window.location.href.includes(str)) {
         return true;
     }
+}
+
+function getParam(name) {
+
+    let url = location.href;
+    let urlx = new URL(url);
+    let pm = urlx.searchParams.get(name);
+    if (pm == null) {
+        return null;
+    }
+    return pm;
+
 }
 
 function onlyMenuSelect() {
@@ -261,20 +273,20 @@ function OpenLbPopup(pageUrl, window_type, fwidth, fheight) {
 var eraseCookie = name => createCookie(name, "", -1);
 
 window.hpe_cancel = function () {
-    document.getElementById(`LB_Popup`).classList.add(`hp-sslide2`);
+    document.querySelector(`#LB_Popup .modal-content`).classList.add(`hp-sslide2`);
     document.getElementsByClassName(`hpe-iframe`)[0].setAttribute(`style`, `visibility:hidden;opacity:0;`);
     setTimeout(function () {
         document.getElementsByClassName(`LB_Popup_close`)[0].click();
-    }, 500);
+    }, 200);
 }
 
 window.hpe_reload = function () {
-    document.getElementById(`LB_Popup`).classList.add(`hp-sslide2`);
+    document.querySelector(`#LB_Popup .modal-content`).classList.add(`hp-sslide2`);
     document.getElementsByClassName(`hpe-iframe`)[0].setAttribute(`style`, `visibility:hidden;opacity:0;`);
     setTimeout(function () {
         document.getElementsByClassName(`LB_Popup_close`)[0].click();
         window.location = window.location.href;
-    }, 500);
+    }, 200);
 }
 
 window.hpe_hide_close = function () {
@@ -431,141 +443,85 @@ function confirmhide(msg, url, index) {
     return false;
 }
 
-function getParam(name) {
 
-    let url = location.href;
-    let urlx = new URL(url);
-    let pm = urlx.searchParams.get(name);
-    if (pm == null) {
-        return null;
+
+// blank page after submiting
+if (stringInURL("/hpe_home") && stringInURL("site=")) {
+
+    // declaration
+    const getSite = getParam("site");
+    let hwd = '_' + getSite.split('.').shift();
+
+    // get domain name
+    if (getSite.includes('/')) {
+
+        hwd = '_' + getSite.split('.').shift() + '_' + getSite.split('/').pop();
+        hwd = hwd.replace(/-/g, '_');
+
     }
-    return pm;
 
-}
+    // detail page/event
+    if (readCookie('hpe_art_detail_url' + hwd) || readCookie('hpe_event_detail_url' + hwd)) {
 
+        let aurl = "";
+        if (readCookie('hpe_art_detail_url' + hwd)) {
 
-// actual code start
-document.addEventListener(`readystatechange`, event => {
-    "use strict";
+            aurl = readCookie('hpe_art_detail_url' + hwd);
 
-    // editor button in site manager
-    if (event.target.readyState === `interactive`) {
+        } else if (readCookie('hpe_event_detail_url' + hwd)) {
 
-        // declaration
-        const dx = {
-            lh: location.href,
-            xlngl: "sp"
-        };
-        const pext = `.a${dx.xlngl}`;
-        const wurlx = new URL(dx.lh);
-        const wbsite = wurlx.searchParams.get(`site`);
-        const btipx = 'data-bs-toggle="tooltip" data-bs-html="true" data-bs-placement="bottom"';
-
-        // check for main page of site manager
-        if (stringInURL(`/${lb.res}${pext}`)) {
-
-            // add live builder button
-            document.getElementsByClassName(`lb-button`)[0].insertAdjacentHTML(`afterbegin`, `<a class="sm-hp" href="/${lb.he}${pext}?site=${wbsite}">${le} ${liveEditor}</a>`);
-
-            // tooltip
-            if (typeof Tipped !== `undefined`) {
-
-                Tipped.create(`.ld-tt`, {
-                    ajax: false,
-                    closeButton: false,
-                    showOn: `mouseover`,
-                    skin: `cloud`,
-                    fixed: true,
-                    target: `mouse`,
-                    maxWidth: 500
-                });
-
-            }
+            aurl = readCookie('hpe_event_detail_url' + hwd);
 
         }
+        document.getElementsByClassName(`my-form`)[0].innerHTML = `<h3>Please Wait...</h3><style>h3 {position: absolute;top: 50%;left: 50%;transform: translate(-50%,-50%);color: gray;font-family: Trebuchet MS;}</style>`;
+        eraseCookie('hpe_art_detail_url' + hwd);
 
-        // blank page after submiting
-        if (stringInURL("/hpe_home") && stringInURL("site=")) {
+        // extracting URL using AJAX
+        // object declaration
+        const xmlhttp = new XMLHttpRequest();
+        let ex_url = "";
 
-            // declaration
-            const lhurl = new URL(dx.lh);
-            const surlw = lhurl.searchParams.get("site");
-            let hwd = '_' + surlw.split('.').shift();
+        // state change check
+        xmlhttp.onreadystatechange = function () {
 
-            // get domain name
-            if (surlw.includes('/')) {
+            if (xmlhttp.readyState == XMLHttpRequest.DONE) {
 
-                hwd = '_' + surlw.split('.').shift() + '_' + surlw.split('/').pop();
-                hwd = hwd.replace(/-/g, '_');
+                if (xmlhttp.status == 200) {
 
-            }
+                    ex_url = xmlhttp.responseText;
+                    var lb_m_url = ex_url.substring(ex_url.lastIndexOf("/") + 1, ex_url.length);
+                    window.parent.location = `/${lb.he}${pext}?lb=${lb_m_url}&site=${getSite}`;
 
-            // detail page/event
-            if (readCookie('hpe_art_detail_url' + hwd) || readCookie('hpe_event_detail_url' + hwd)) {
+                } else if (xmlhttp.status == 400) {
 
-                let aurl = "";
-                if (readCookie('hpe_art_detail_url' + hwd)) {
+                    console.log('Extract URL: There was an error 400');
 
-                    aurl = readCookie('hpe_art_detail_url' + hwd);
+                } else {
 
-                } else if (readCookie('hpe_event_detail_url' + hwd)) {
-
-                    aurl = readCookie('hpe_event_detail_url' + hwd);
+                    console.log('Extract URL: something else other than 200 was returned');
 
                 }
-                document.getElementsByClassName(`my-form`)[0].innerHTML = `<h3>Please Wait...</h3><style>h3 {position: absolute;top: 50%;left: 50%;transform: translate(-50%,-50%);color: gray;font-family: Trebuchet MS;}</style>`;
-                eraseCookie('hpe_art_detail_url' + hwd);
-
-                // extracting URL using AJAX
-                // object declaration
-                const xmlhttp = new XMLHttpRequest();
-                let ex_url = "";
-
-                // state change check
-                xmlhttp.onreadystatechange = function () {
-
-                    if (xmlhttp.readyState == XMLHttpRequest.DONE) {
-
-                        if (xmlhttp.status == 200) {
-
-                            ex_url = xmlhttp.responseText;
-                            var lb_m_url = ex_url.substring(ex_url.lastIndexOf("/") + 1, ex_url.length);
-                            window.parent.location = `/${lb.he}${pext}?lb=${lb_m_url}&site=${surlw}`;
-
-                        } else if (xmlhttp.status == 400) {
-
-                            console.log('Extract URL: There was an error 400');
-
-                        } else {
-
-                            console.log('Extract URL: something else other than 200 was returned');
-
-                        }
-
-                    }
-
-                };
-                xmlhttp.open("GET", aurl, true);
-                xmlhttp.send();
-
-            } else if (readCookie('hpe_detail_deletex' + hwd)) { // Detail Delete
-
-                let i = readCookie('hpe_detail_deletex' + hwd);
-                eraseCookie('hpe_detail_deletex' + hwd);
-                createCookie(`hpe_detail_deletey${hwd}`);
-                window.parent.location = `https://${dx.lh.match(/:\/\/(.[^/]+)/)[1]}/${lb.he}${pext}?lb=index${i}.htm&site=${wbsite}`;
-
-            } else {
-
-                window.parent.hpe_reload();
 
             }
 
-        }
+        };
+        xmlhttp.open("GET", aurl, true);
+        xmlhttp.send();
+
+    } else if (readCookie('hpe_detail_deletex' + hwd)) { // Detail Delete
+
+        let i = readCookie('hpe_detail_deletex' + hwd);
+        eraseCookie('hpe_detail_deletex' + hwd);
+        createCookie(`hpe_detail_deletey${hwd}`);
+        window.parent.location = `https://${dx.lh.match(/:\/\/(.[^/]+)/)[1]}/${lb.he}${pext}?lb=index${i}.htm&site=${wbsite}`;
+
+    } else {
+
+        window.parent.hpe_reload();
 
     }
 
-});
+}
 
 
 $(document).ready(function () {
@@ -626,8 +582,8 @@ $(document).ready(function () {
             // add style DIV 
             document.querySelector("body").insertAdjacentHTML("beforeend", `<div class="lbStyles"></div>`);
 
-            // remove manage link for coifee
-            document.querySelector("#cfbodymain") && (document.querySelector(".hpx-manage") && (document.querySelector(".hpx-manage").style.display = "none"));
+            // remove manage link for coiffee with data-access="limited" in body tag
+            document.querySelector(`#cfbodymain[data-access="limited"]`) && (document.querySelector(".hpx-manage") && (document.querySelector(".hpx-manage").style.display = "none"));
 
             // get domain
             if (wsite.includes('/')) {
@@ -761,7 +717,7 @@ $(document).ready(function () {
                     <div class='hpx-24x7' data-ticket='${MyTickets()}'>
                         <i class='fa fa-question-circle' aria-hidden='true'></i> 24x7 Support
                         <bell>
-                            <a title='View My Recent Tickets' href='/${plist}lid=SupportTickets&lid2=&level=0&pkeyname=&pkey=&sortflag=&wpage=&hpath=&smid=&x=&site=${wsite}&hpe=Y#hpe_support' onclick='return ! window.open(this.href);'><i class='fa fa-bell' aria-hidden='true'></i></a>
+                            <a title='View My Recent Tickets' href='/${plist}lid=SupportTickets&lid2=&level=0&pkeyname=&pkey=&sortflag=&wpage=&hpath=&smid=&x=&site=${wsite}}&sm=N&hpe=Y#hpe_support' onclick='return ! window.open(this.href);'><i class='fa fa-bell' aria-hidden='true'></i></a>
                         </bell>
                     </div>`;
 
@@ -1104,7 +1060,7 @@ $(document).ready(function () {
                             <div class="hp-z">
                                 <div class="hp-span">
 
-                                    <a ${btip} title="Edit Logo" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}pform=options_systems&pkeyname=sys_option_system_id&pkey=1&x=&site=${wsite}&smx=Y&hpe=Y#hpe_logo_img','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                    <a ${btip} title="Edit Logo" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}pform=options_systems&pkeyname=sys_option_system_id&pkey=1&x=&site=${wsite}&sm=N&hpe=Y#hpe_logo_img','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
 
                                     <a ${btip} title="View Homepage" href="${hlb}">${link}<b class="hp-llable">View</b></a>
 
@@ -1129,7 +1085,7 @@ $(document).ready(function () {
 
                                 <div class="hp-span">
 
-                                    <a ${btip} title="Edit Logo" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}pform=options_systems&pkeyname=sys_option_system_id&pkey=1&x=&site=${wsite}&smx=Y&hpe=Y#hpe_logo','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                    <a ${btip} title="Edit Logo" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}pform=options_systems&pkeyname=sys_option_system_id&pkey=1&x=&site=${wsite}&sm=N&hpe=Y#hpe_logo','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
 
                                     <a ${btip} title="View Homepage" href="${hlb}">${link}<b class="hp-llable">View</b></a>
 
@@ -1175,7 +1131,7 @@ $(document).ready(function () {
                                 <div class="hp-y">
                                     <div class="hp-z">
                                         <div class="hp-span">
-                                            <a ${btip} title="Add New Submenu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Sub-Menu&pkeyname=sys_menu_sub_id&pkey=&fkeyname=sys_menu_id&fkey=${mk}&eflag=Yes&wpage=&hpath=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&fpx=100#hpe_in_new_submenu','iframe');">${plus}</a>
+                                            <a ${btip} title="Add New Submenu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Sub-Menu&pkeyname=sys_menu_sub_id&pkey=&fkeyname=sys_menu_id&fkey=${mk}&eflag=Yes&wpage=&hpath=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&fpx=100#hpe_in_new_submenu','iframe');">${plus}</a>
                                         </div>
                                     </div>
                                 </div>
@@ -1207,7 +1163,7 @@ $(document).ready(function () {
                 $('.hpe-menu.hp-x .hp-y').append(`
                 <div class="hp-z">
                     <div class="hp-span">
-                        <a ${btip} title="Edit Menu & SubMenu" href="javascript:void(0);" onclick="OpenLbPopup('/${plist}lid=Menu&x=&site=${wsite}&smx=Y#hpe_menu','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                        <a ${btip} title="Edit Menu & SubMenu" href="javascript:void(0);" onclick="OpenLbPopup('/${plist}lid=Menu&x=&site=${wsite}&sm=N#hpe_menu','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
                     </div>
                     <div class="hp-span" ${btip} title="Close Menu Editor to view Menu/Submenu Pages" class="hp-close"></div>
                 </div>`);
@@ -1275,11 +1231,11 @@ $(document).ready(function () {
                         <div class="hp-z">
                             <div class="hp-span">
 
-                                <a ${btip} title="Edit Menu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Menu&pkeyname=sys_menu_id&pkey=${mk}&fkeyname=&fkey=&wpage=&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_in_menu_x','iframe');">${pencil}</a>
+                                <a ${btip} title="Edit Menu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Menu&pkeyname=sys_menu_id&pkey=${mk}&fkeyname=&fkey=&wpage=&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_in_menu_x','iframe');">${pencil}</a>
 
-                                <a ${btip} title="Add New Menu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Menu&pkeyname=sys_menu_id&pkey=&fkeyname=&fkey=&eflag=Yes&wpage=&hpath=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&vpx=${dv}&fpx=${mon}#hpe_in_new_menu','iframe');">${plus}</a>
+                                <a ${btip} title="Add New Menu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Menu&pkeyname=sys_menu_id&pkey=&fkeyname=&fkey=&eflag=Yes&wpage=&hpath=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&vpx=${dv}&fpx=${mon}#hpe_in_new_menu','iframe');">${plus}</a>
 
-                                <a class="hp-menudelete" ${btip} title="Delete Menu" href="javascript:void(0);" onclick="return confirmdelete('${dl1} Menu and<br>all associated Submenus and Articles${dl2}', '/${pdist}lid=Menu&lid2=&level=0&pform=Menu&dname=Menu&pkeyname=sys_menu_id&pkey=${mk}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y');">${trash}</a>
+                                <a class="hp-menudelete" ${btip} title="Delete Menu" href="javascript:void(0);" onclick="return confirmdelete('${dl1} Menu and<br>all associated Submenus and Articles${dl2}', '/${pdist}lid=Menu&lid2=&level=0&pform=Menu&dname=Menu&pkeyname=sys_menu_id&pkey=${mk}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}</a>
 
                                 <a class="hp-menulink" ${btip} title="View Menu" href="${dk}">${link}</a>
 
@@ -1361,7 +1317,7 @@ $(document).ready(function () {
                         $(this).children('.hp-y').append(`
                         <div class="hp-z">
                             <div class="hp-span">
-                                <a ${btip} title="Edit Menu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Menu&pkeyname=sys_menu_id&pkey=${mk}&fkeyname=&fkey=&wpage=&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_in_menu_only','iframe');">${pencil}</a>
+                                <a ${btip} title="Edit Menu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Menu&pkeyname=sys_menu_id&pkey=${mk}&fkeyname=&fkey=&wpage=&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_in_menu_only','iframe');">${pencil}</a>
                             </div>
                         </div>`);
                     }
@@ -1423,11 +1379,11 @@ $(document).ready(function () {
                         <div class="hp-z">
                             <div class="hp-span">
 
-                                <a ${btip} title="Edit Submenu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Sub-Menu&pkeyname=sys_menu_sub_id&pkey=${sk}&fkeyname=sys_menu_id&fkey=${mk}&wpage=&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_in_submenu_x','iframe');">${pencil}</a>
+                                <a ${btip} title="Edit Submenu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Sub-Menu&pkeyname=sys_menu_sub_id&pkey=${sk}&fkeyname=sys_menu_id&fkey=${mk}&wpage=&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_in_submenu_x','iframe');">${pencil}</a>
 
-                                <a ${btip} title="Add New Submenu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Sub-Menu&pkeyname=sys_menu_sub_id&pkey=&fkeyname=sys_menu_id&fkey=${mk}&eflag=Yes&wpage=&hpath=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&fpx=${smon}#hpe_in_new_submenu','iframe');">${plus}</a>
+                                <a ${btip} title="Add New Submenu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Sub-Menu&pkeyname=sys_menu_sub_id&pkey=&fkeyname=sys_menu_id&fkey=${mk}&eflag=Yes&wpage=&hpath=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&fpx=${smon}#hpe_in_new_submenu','iframe');">${plus}</a>
 
-                                <a class="hp-submenudelete" ${btip} title="Delete Submenu" href="javascript:void(0);" onclick="return confirmdelete('${dl1} Submenu and<br>all associated articles${dl2}', '/${pdist}lid=Menu&lid2=&level=1&pform=Sub-Menu&dname=Menu&pkeyname=sys_menu_sub_id&pkey=${sk}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y');">${trash}</a>
+                                <a class="hp-submenudelete" ${btip} title="Delete Submenu" href="javascript:void(0);" onclick="return confirmdelete('${dl1} Submenu and<br>all associated articles${dl2}', '/${pdist}lid=Menu&lid2=&level=1&pform=Sub-Menu&dname=Menu&pkeyname=sys_menu_sub_id&pkey=${sk}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}</a>
 
                                 <a ${btip} title="View Submenu" href="${dk}">${link}</a>
                             </div>
@@ -1446,7 +1402,7 @@ $(document).ready(function () {
                         $(this).children('.hp-y').append(`
                         <div class="hp-z">
                             <div class="hp-span">
-                                <a ${btip} title="Edit SubMenu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Sub-Menu&pkeyname=sys_menu_sub_id&pkey=${sk}&fkeyname=sys_menu_id&fkey=${mk}&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_in_submenu_only','iframe');">${pencil}</a>
+                                <a ${btip} title="Edit SubMenu" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}lid=Menu&lid2=&level=1&pform=Sub-Menu&pkeyname=sys_menu_sub_id&pkey=${sk}&fkeyname=sys_menu_id&fkey=${mk}&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_in_submenu_only','iframe');">${pencil}</a>
                             </div>
                         </div>`);
                     }
@@ -1502,11 +1458,11 @@ $(document).ready(function () {
                         <div class="hp-z">
                             <div class="hp-span">
 
-                                <a href="javascript:void(0);" ${btip} title="Edit Ad" onclick="OpenLbPopup('/${pfist}${ads}${adid}&fkeyname=group_id&fkey=${adnum}&wpage=1&hpath=AdGroup${adnum}&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Edit Ad" onclick="OpenLbPopup('/${pfist}${ads}${adid}&fkeyname=group_id&fkey=${adnum}&wpage=1&hpath=AdGroup${adnum}&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
 
-                                <a href="javascript:void(0);" ${btip} title="Add New Ad" onclick="OpenLbPopup('/${pfist}${ads}&fkeyname=group_id&fkey=${adnum}&eflag=Yes&wpage=1&hpath=AdGroup${adnum}&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_newadx','iframe');">${plus}<b class="hp-llable">New</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Add New Ad" onclick="OpenLbPopup('/${pfist}${ads}&fkeyname=group_id&fkey=${adnum}&eflag=Yes&wpage=1&hpath=AdGroup${adnum}&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_newadx','iframe');">${plus}<b class="hp-llable">New</b></a>
 
-                                <a href="javascript:void(0);" ${btip} title="Delete Ad" onclick="return confirmdelete('${dl1} Ad${dl2}', '/${pdist}lid=CustomersAdsGroups&lid2=&level=1&pform=customers_ads&dname=CustomersAds&pkeyname=ar_customers_ads_id&pkey=${adid}&wpage=1&hpath=AdGroup${adnum}&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Delete Ad" onclick="return confirmdelete('${dl1} Ad${dl2}', '/${pdist}lid=CustomersAdsGroups&lid2=&level=1&pform=customers_ads&dname=CustomersAds&pkeyname=ar_customers_ads_id&pkey=${adid}&wpage=1&hpath=AdGroup${adnum}&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
 
                                 <a class="hp-help hp-tt" ${btip} href="javascript:void(0);" ${btip} title="${hlp}">${info}<b class="hp-llable">Help</b></a>
 
@@ -1601,11 +1557,11 @@ $(document).ready(function () {
                                 <div class="hp-z">
                                     <div class="hp-span">
 
-                                        <a href="javascript:void(0);" ${btip} title="Edit Ad" onclick="OpenLbPopup('/${pfist}${ads}${adid}&fkeyname=group_id&fkey=${adnum}&wpage=1&hpath=AdGroup${adnum}&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                        <a href="javascript:void(0);" ${btip} title="Edit Ad" onclick="OpenLbPopup('/${pfist}${ads}${adid}&fkeyname=group_id&fkey=${adnum}&wpage=1&hpath=AdGroup${adnum}&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
 
-                                        <a href="javascript:void(0);" ${btip} title="Add New Ad" onclick="OpenLbPopup('/${pfist}${ads}&fkeyname=group_id&fkey=${adnum}&eflag=Yes&wpage=1&hpath=AdGroup${adnum}&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_newadx','iframe');">${plus}<b class="hp-llable">New</b></a>
+                                        <a href="javascript:void(0);" ${btip} title="Add New Ad" onclick="OpenLbPopup('/${pfist}${ads}&fkeyname=group_id&fkey=${adnum}&eflag=Yes&wpage=1&hpath=AdGroup${adnum}&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_newadx','iframe');">${plus}<b class="hp-llable">New</b></a>
 
-                                        <a href="javascript:void(0);" ${btip} title="Delete Ad" onclick="return confirmdelete('${dl1} Ad${dl2}', '/${pdist}lid=CustomersAdsGroups&lid2=&level=1&pform=customers_ads&dname=CustomersAds&pkeyname=ar_customers_ads_id&pkey=${adid}&wpage=1&hpath=AdGroup${adnum}&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
+                                        <a href="javascript:void(0);" ${btip} title="Delete Ad" onclick="return confirmdelete('${dl1} Ad${dl2}', '/${pdist}lid=CustomersAdsGroups&lid2=&level=1&pform=customers_ads&dname=CustomersAds&pkeyname=ar_customers_ads_id&pkey=${adid}&wpage=1&hpath=AdGroup${adnum}&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
 
                                     </div>
                                     <header class="hp-hheader">AdGroup - ${adnum}</header>
@@ -1670,11 +1626,11 @@ $(document).ready(function () {
                                 <div class="hp-z">
                                     <div class="hp-span">
 
-                                        <a href="javascript:void(0);" ${btip} title="Edit Ad" onclick="OpenLbPopup('/${pfist}${ads}${adid}&fkeyname=group_id&fkey=${adnum}&wpage=1&hpath=AdGroup${adnum}&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                        <a href="javascript:void(0);" ${btip} title="Edit Ad" onclick="OpenLbPopup('/${pfist}${ads}${adid}&fkeyname=group_id&fkey=${adnum}&wpage=1&hpath=AdGroup${adnum}&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
 
-                                        <a href="javascript:void(0);" ${btip} title="Add New Ad" onclick="OpenLbPopup('/${pfist}${ads}&fkeyname=group_id&fkey=${adnum}&eflag=Yes&wpage=1&hpath=AdGroup${adnum}&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_newadx','iframe');">${plus}<b class="hp-llable">New</b></a>
+                                        <a href="javascript:void(0);" ${btip} title="Add New Ad" onclick="OpenLbPopup('/${pfist}${ads}&fkeyname=group_id&fkey=${adnum}&eflag=Yes&wpage=1&hpath=AdGroup${adnum}&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_newadx','iframe');">${plus}<b class="hp-llable">New</b></a>
 
-                                        <a href="javascript:void(0);" ${btip} title="Delete Ad" onclick="return confirmdelete('${dl1} Ad${dl2}', '/${pdist}lid=CustomersAdsGroups&lid2=&level=1&pform=customers_ads&dname=CustomersAds&pkeyname=ar_customers_ads_id&pkey=${adid}&wpage=1&hpath=AdGroup${adnum}&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
+                                        <a href="javascript:void(0);" ${btip} title="Delete Ad" onclick="return confirmdelete('${dl1} Ad${dl2}', '/${pdist}lid=CustomersAdsGroups&lid2=&level=1&pform=customers_ads&dname=CustomersAds&pkeyname=ar_customers_ads_id&pkey=${adid}&wpage=1&hpath=AdGroup${adnum}&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
 
                                     </div>
                                     <header class="hp-hheader">AdGroup - ${adnum}</header>
@@ -1752,11 +1708,11 @@ $(document).ready(function () {
                     <div class="hp-z">
                         <div class="hp-span">
 
-                            <a ${btip} title="Edit Poll" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}${pl}${px}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_update_pollxy','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                            <a ${btip} title="Edit Poll" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}${pl}${px}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_update_pollxy','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
 
-                            <a ${btip} title="Add New Poll" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}${pl}&fkeyname=&fkey=&eflag=Yes&wpage=&hpath=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_new_polls','iframe');">${plus}<b class="hp-llable">New</b></a>
+                            <a ${btip} title="Add New Poll" href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}${pl}&fkeyname=&fkey=&eflag=Yes&wpage=&hpath=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_new_polls','iframe');">${plus}<b class="hp-llable">New</b></a>
 
-                            <a ${btip} title="Delete Poll" href="javascript:void(0);" onclick="return confirmdelete('${dl1} Poll${dl2}', '/${pdist}lid=Polls&lid2=&level=0&pform=polls&dname=Polls&pkeyname=sys_poll_id&pkey=${px}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
+                            <a ${btip} title="Delete Poll" href="javascript:void(0);" onclick="return confirmdelete('${dl1} Poll${dl2}', '/${pdist}lid=Polls&lid2=&level=0&pform=polls&dname=Polls&pkeyname=sys_poll_id&pkey=${px}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
 
                             <a class="hp-help hp-tt hp-poll-help" ${btip} href="javascript:void(0);" title="${hlp}">${info}<b class="hp-llable">Help</b></a>
 
@@ -1788,13 +1744,13 @@ $(document).ready(function () {
                             <div class="hp-z">
                                 <div class="hp-span">
 
-                                    <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&fpx=hlx${h}&x=&site=${wsite}&smx=Y&hln=${h}&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                    <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&fpx=hlx${h}&x=&site=${wsite}&hln=${h}&sm=N&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
 
-                                    <a href="javascript:void(0);" ${btip} title="Add New Article" onclick="OpenLbPopup('/${pfist}${article_pages}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hln=${h}&hpe=Y&isdate=${isdate}#hpe_hlx${h}','iframe');">${plus}<b class="hp-llable">New</b></a>
+                                    <a href="javascript:void(0);" ${btip} title="Add New Article" onclick="OpenLbPopup('/${pfist}${article_pages}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&hln=${h}&sm=N&hpe=Y&isdate=${isdate}#hpe_hlx${h}','iframe');">${plus}<b class="hp-llable">New</b></a>
 
-                                    <a href="javascript:void(0);" ${btip} title="Hide Article from Highlight - ${h}" onclick="return confirmhide('${dh}', '/${pfist}${article_pages}${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_hldx${h}');">${minus}<b class="hp-llable">Hide</b></a>
+                                    <a href="javascript:void(0);" ${btip} title="Hide Article from Highlight - ${h}" onclick="return confirmhide('${dh}', '/${pfist}${article_pages}${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_hldx${h}');">${minus}<b class="hp-llable">Hide</b></a>
 
-                                    <a href="javascript:void(0);" ${btip} title="Delete Article" onclick="return confirmdelete('${dl1} Article${dl2}', '/${pdist}lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=${haid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
+                                    <a href="javascript:void(0);" ${btip} title="Delete Article" onclick="return confirmdelete('${dl1} Article${dl2}', '/${pdist}lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=${haid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
                                     
                                     <a ${btip} title="View Article" href="${durl}">${link}<b class="hp-llable">View</b></a>
 
@@ -1824,11 +1780,11 @@ $(document).ready(function () {
                         <div class="hp-z">
                             <div class="hp-span">
 
-                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&fpx=preview&fields=heading_body#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&fpx=preview&fields=heading_body#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
 
-                                <a href="javascript:void(0);" ${btip} title="Add New Article" onclick="OpenLbPopup('/${pfist}${article_pages}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&fields=heading_body&smx=Y&hpe=Y&isdate=${isdate}#hpe_prevxy$$${m}&&${s}','iframe');">${plus}<b class="hp-llable">New</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Add New Article" onclick="OpenLbPopup('/${pfist}${article_pages}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&fields=heading_body&sm=N&hpe=Y&isdate=${isdate}#hpe_prevxy$$${m}&&${s}','iframe');">${plus}<b class="hp-llable">New</b></a>
 
-                                <a href="javascript:void(0);" ${btip} title="Delete Article" onclick="return confirmdelete('${dl1} Article${dl2}', '/${pdist}lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=${haid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>                                
+                                <a href="javascript:void(0);" ${btip} title="Delete Article" onclick="return confirmdelete('${dl1} Article${dl2}', '/${pdist}lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=${haid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>                                
 
                             </div>
                             <header class="hp-hheader">${$(this).attr("data-submenu")}</header>
@@ -1852,11 +1808,11 @@ $(document).ready(function () {
                         <div class="hp-z">
                             <div class="hp-span">
 
-                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&fpx=preview#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&fpx=preview#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
 
-                                <a href="javascript:void(0);" ${btip} title="Add New Article" onclick="OpenLbPopup('/${pfist}${article_pages}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&isdate=${isdate}#hpe_prevxy$$${m}&&${s}','iframe');">${plus}<b class="hp-llable">New</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Add New Article" onclick="OpenLbPopup('/${pfist}${article_pages}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&isdate=${isdate}#hpe_prevxy$$${m}&&${s}','iframe');">${plus}<b class="hp-llable">New</b></a>
 
-                                <a href="javascript:void(0);" ${btip} title="Delete Article" onclick="return confirmdelete('${dl1} Article${dl2}', '/${pdist}lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=${haid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Delete Article" onclick="return confirmdelete('${dl1} Article${dl2}', '/${pdist}lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=${haid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
 
                                 <a ${btip} title="View Article" href="${durl}">${link}<b class="hp-llable">View</b></a>
 
@@ -1880,11 +1836,11 @@ $(document).ready(function () {
                         $(this).children('.hp-y').append(`
                         <div class="hp-z">
                             <div class="hp-span">
-                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&fpx=preview#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&fpx=preview#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
                                 
-                                <a href="javascript:void(0);" ${btip} title="Add New Article" onclick="OpenLbPopup('/${pfist}${article_pages}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&isdate=${isdate}#hpe_xprevxy$$${m}&&${s}','iframe');">${plus}<b class="hp-llable">New</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Add New Article" onclick="OpenLbPopup('/${pfist}${article_pages}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&isdate=${isdate}#hpe_xprevxy$$${m}&&${s}','iframe');">${plus}<b class="hp-llable">New</b></a>
                                 
-                                <a href="javascript:void(0);" ${btip} title="Delete Article" onclick="return confirmdelete('${dl1} Article${dl2}', '/${pdist}lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=${haid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Delete Article" onclick="return confirmdelete('${dl1} Article${dl2}', '/${pdist}lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=${haid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
                                 
                                 <a ${btip} title="View Article" href="${durl}">${link}<b class="hp-llable">View</b></a>
                             </div>
@@ -1903,7 +1859,7 @@ $(document).ready(function () {
                     var isdate = $(this).attr('data-date');
                     var durl = dlb + $(this).attr('data-url').replace(/.*\//, "") + '&site=' + wsite;
                     if ($(this).children('.hp-y').children('.hp-z').length == 0) {
-                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Article" onclick="OpenLbPopup(\'/' + pfist + article_pages + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpx=section#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Article" onclick="OpenLbPopup(\'/' + pfist + article_pages + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&fpx=section&x=&site=' + wsite + '&smx=Y&hpe=Y&isdate=' + isdate + '#hpe_prevxy$$' + m + '&&' + s + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Article" onclick="return confirmdelete(\'' + dl1 + ' Article' + dl2 + '\', \'/' + pdist + 'lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=' + haid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a><a ' + btip + ' title="View Article" href="' + durl + '">' + link + '<b class="hp-llable">View</b></a></div></div>');
+                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Article" onclick="OpenLbPopup(\'/' + pfist + article_pages + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpx=section#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Article" onclick="OpenLbPopup(\'/' + pfist + article_pages + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&fpx=section&x=&site=' + wsite + '&sm=N&hpe=Y&isdate=' + isdate + '#hpe_prevxy$$' + m + '&&' + s + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Article" onclick="return confirmdelete(\'' + dl1 + ' Article' + dl2 + '\', \'/' + pdist + 'lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=' + haid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a><a ' + btip + ' title="View Article" href="' + durl + '">' + link + '<b class="hp-llable">View</b></a></div></div>');
                     }
                 });
 
@@ -1917,7 +1873,7 @@ $(document).ready(function () {
                     var isdate = $(this).attr('data-date');
                     //var durl =  dlb + $(this).attr('data-url').replace(/.*\//, "") + '&site=' + wsite;
                     if ($(this).children('.hp-y').children('.hp-z').length == 0) {
-                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Edition" onclick="OpenLbPopup(\'/' + pfist + article_pages + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpx=edition#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Edition" onclick="OpenLbPopup(\'/' + pfist + article_pages + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpx=edition&isdate=' + isdate + '#hpe_prevxy$$' + m + '&&' + s + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Edition" onclick="return confirmdelete(\'' + dl1 + ' E-Edition' + dl2 + '\', \'/' + pdist + 'lid=Pages&lid2=&level=1&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=' + haid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div></div>');
+                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Edition" onclick="OpenLbPopup(\'/' + pfist + article_pages + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpx=edition#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Edition" onclick="OpenLbPopup(\'/' + pfist + article_pages + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpx=edition&isdate=' + isdate + '#hpe_prevxy$$' + m + '&&' + s + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Edition" onclick="return confirmdelete(\'' + dl1 + ' E-Edition' + dl2 + '\', \'/' + pdist + 'lid=Pages&lid2=&level=1&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=' + haid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div></div>');
                     }
                 });
             }
@@ -1931,7 +1887,7 @@ $(document).ready(function () {
                         $(this).children('.hp-y').append(`
                         <div class="hp-z">
                             <div class="hp-span">
-                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${daid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&fields=heading_body_picture#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>                                
+                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${daid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&fields=heading_body_picture#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>                                
                             </div>
                         </div>`);
                     }
@@ -1947,7 +1903,7 @@ $(document).ready(function () {
                         $(this).children('.hp-y').append(`
                         <div class="hp-z">
                             <div class="hp-span">
-                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${daid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&fields=heading_body_picture_nobody#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>                                
+                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${daid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&fields=heading_body_picture_nobody#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>                                
                             </div>
                         </div>`);
                     }
@@ -1963,7 +1919,7 @@ $(document).ready(function () {
                         $(this).children('.hp-y').append(`
                         <div class="hp-z">
                             <div class="hp-span">
-                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${daid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${daid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
                                 <a ${btip} title="View Article" href="${durl}">${link}<b class="hp-llable">View</b></a>
                             </div>
                         </div>`);
@@ -1981,9 +1937,9 @@ $(document).ready(function () {
                         $(this).children('.hp-y').append(`
                         <div class="hp-z">
                             <div class="hp-span">
-                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${daid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&fpx=art_detail#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Edit Article" onclick="OpenLbPopup('/${pfist}${article_pages}${daid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&fpx=art_detail#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
                                 
-                                <a href="javascript:void(0);" class="detail_delete" ${btip} title="Delete Article" onclick="return confirmdetaildelete('${dl1} Article${dl2}', '/${pdist}lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=${daid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y', '${sbid}');">${trash}<b class="hp-llable">Delete</b></a>
+                                <a href="javascript:void(0);" class="detail_delete" ${btip} title="Delete Article" onclick="return confirmdetaildelete('${dl1} Article${dl2}', '/${pdist}lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=${daid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y', '${sbid}');">${trash}<b class="hp-llable">Delete</b></a>
                             </div>
                         </div>`);
                     }
@@ -2000,9 +1956,9 @@ $(document).ready(function () {
                         <div class="hp-z">
                             <div class="hp-span">
 
-                                <a href="javascript:void(0);" ${btip} title="Edit Event" onclick="OpenLbPopup('/${pfist}lid=Events2&lid2=&level=1&pform=events2&pkeyname=sys_information_id&pkey=${daid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&fpx=event_detail#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Edit Event" onclick="OpenLbPopup('/${pfist}lid=Events2&lid2=&level=1&pform=events2&pkeyname=sys_information_id&pkey=${daid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&fpx=event_detail#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
 
-                                <a href="javascript:void(0);" class="detail_delete" ${btip} title="Delete Article" onclick="return confirmdetaildelete('${dl1} Event${dl2}', '/${pdist}lid=Events2&lid2=&level=0&pform=events2&dname=Events2&pkeyname=sys_information_id&pkey=${daid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y', '${sbid}');">${trash}<b class="hp-llable">Delete</b></a>
+                                <a href="javascript:void(0);" class="detail_delete" ${btip} title="Delete Article" onclick="return confirmdetaildelete('${dl1} Event${dl2}', '/${pdist}lid=Events2&lid2=&level=0&pform=events2&dname=Events2&pkeyname=sys_information_id&pkey=${daid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y', '${sbid}');">${trash}<b class="hp-llable">Delete</b></a>
 
                             </div>
                         </div>`);
@@ -2023,11 +1979,11 @@ $(document).ready(function () {
                         <div class="hp-z">
                             <div class="hp-span">
 
-                                <a href="javascript:void(0);" ${btip} title="Edit Event" onclick="OpenLbPopup('/${pfist}lid=Events2&lid2=&level=1&pform=events2&pkeyname=sys_information_id&pkey=${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&fpx=event&x=&site=${wsite}&smx=Y&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Edit Event" onclick="OpenLbPopup('/${pfist}lid=Events2&lid2=&level=1&pform=events2&pkeyname=sys_information_id&pkey=${haid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&fpx=event&x=&site=${wsite}&sm=N&hpe=Y#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
 
-                                <a href="javascript:void(0);" ${btip} title="Add New Event" onclick="OpenLbPopup('/${pfist}lid=Events2&lid2=&level=1&pform=events2&pkeyname=sys_information_id&pkey=&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y&isdate=${isdate}#hpe_eventxy$$${m}&&${s}','iframe');">${plus}<b class="hp-llable">New</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Add New Event" onclick="OpenLbPopup('/${pfist}lid=Events2&lid2=&level=1&pform=events2&pkeyname=sys_information_id&pkey=&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&isdate=${isdate}#hpe_eventxy$$${m}&&${s}','iframe');">${plus}<b class="hp-llable">New</b></a>
 
-                                <a href="javascript:void(0);" ${btip} title="Delete Event" onclick="return confirmdelete('${dl1} Event${dl2}', '/${pdist}lid=Events2&lid2=&level=0&pform=events2&dname=Events2&pkeyname=sys_information_id&pkey=${haid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
+                                <a href="javascript:void(0);" ${btip} title="Delete Event" onclick="return confirmdelete('${dl1} Event${dl2}', '/${pdist}lid=Events2&lid2=&level=0&pform=events2&dname=Events2&pkeyname=sys_information_id&pkey=${haid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
 
                                 <a ${btip} title="View Event" href="${eurl}">${link}<b class="hp-llable">View</b></a>
 
@@ -2046,7 +2002,7 @@ $(document).ready(function () {
                     var haid = $(this).attr('data-product');
                     $(this).addClass('hp-ppp');
                     if ($(this).children('.hp-y').children('.hp-z').length == 0) {
-                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Product" onclick="OpenLbPopup(\'/' + pfist + 'lid=Products&lid2=&level=0&pform=products&pkeyname=sys_product_id&pkey=' + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&fpx=product&x=&site=' + wsite + '&smx=Y&hpe=Y#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Product" onclick="OpenLbPopup(\'/' + pfist + 'lid=Products&lid2=&level=0&pform=products&pkeyname=sys_product_id&pkey=&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpc=' + mc + '#hpe_productxy$$&&' + s + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Product" onclick="return confirmdelete(\'' + dl1 + ' Product' + dl2 + '\', \'/' + pdist + 'lid=Products&lid2=&level=0&pform=products&dname=Products&pkeyname=sys_product_id&pkey=' + haid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div><header class="hp-hheader">Product - ' + $(this).attr("data-submenu") + '</header></div>');
+                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Product" onclick="OpenLbPopup(\'/' + pfist + 'lid=Products&lid2=&level=0&pform=products&pkeyname=sys_product_id&pkey=' + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&fpx=product&x=&site=' + wsite + '&sm=N&hpe=Y#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Product" onclick="OpenLbPopup(\'/' + pfist + 'lid=Products&lid2=&level=0&pform=products&pkeyname=sys_product_id&pkey=&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpc=' + mc + '#hpe_productxy$$&&' + s + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Product" onclick="return confirmdelete(\'' + dl1 + ' Product' + dl2 + '\', \'/' + pdist + 'lid=Products&lid2=&level=0&pform=products&dname=Products&pkeyname=sys_product_id&pkey=' + haid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div><header class="hp-hheader">Product - ' + $(this).attr("data-submenu") + '</header></div>');
                     }
                 });
             }
@@ -2054,7 +2010,7 @@ $(document).ready(function () {
                 $('.hpe-in-product-category.hp-x').each(function () {
                     var dcid = $(this).attr('data-category-id');
                     if ($(this).children('.hp-y').children('.hp-z').length == 0) {
-                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + 'lid=Codes&lid2=&level=0&pform=codes&pkeyname=code_id&pkey=' + dcid + '&fkeyname=&fkey=&wpage=&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpx=codes#hpe_updatex\',\'iframe\');">' + pencil + '</a></div></div>');
+                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + 'lid=Codes&lid2=&level=0&pform=codes&pkeyname=code_id&pkey=' + dcid + '&fkeyname=&fkey=&wpage=&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpx=codes#hpe_updatex\',\'iframe\');">' + pencil + '</a></div></div>');
                     }
                 });
             }
@@ -2067,7 +2023,7 @@ $(document).ready(function () {
                     var haid = $(this).attr('data-id');
                     $(this).addClass('hp-ppp');
                     if ($(this).children('.hp-y').children('.hp-z').length == 0) {
-                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Directory" onclick="OpenLbPopup(\'/' + pfist + 'lid=CustomersSetup&lid2=&level=0&pform=customers&pkeyname=customer_id&pkey=' + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&fpx=directory&x=&site=' + wsite + '&smx=Y&hpe=Y#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Directory" onclick="OpenLbPopup(\'/' + pfist + 'lid=CustomersSetup&lid2=&level=0&pform=customers&pkeyname=customer_id&pkey=&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpc=' + mc + '#hpe_directoryxy$$&&' + s + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Directory" onclick="return confirmdelete(\'' + dl1 + ' Directory' + dl2 + '\', \'/' + pdist + 'lid=CustomersSetup&lid2=&level=0&pform=customers&dname=Customers&pkeyname=customer_id&pkey=' + haid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div><header class="hp-hheader">Directory - ' + $(this).attr("data-submenu") + '</header></div>');
+                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Directory" onclick="OpenLbPopup(\'/' + pfist + 'lid=CustomersSetup&lid2=&level=0&pform=customers&pkeyname=customer_id&pkey=' + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&fpx=directory&x=&site=' + wsite + '&sm=N&hpe=Y#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Directory" onclick="OpenLbPopup(\'/' + pfist + 'lid=CustomersSetup&lid2=&level=0&pform=customers&pkeyname=customer_id&pkey=&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpc=' + mc + '#hpe_directoryxy$$&&' + s + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Directory" onclick="return confirmdelete(\'' + dl1 + ' Directory' + dl2 + '\', \'/' + pdist + 'lid=CustomersSetup&lid2=&level=0&pform=customers&dname=Customers&pkeyname=customer_id&pkey=' + haid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div><header class="hp-hheader">Directory - ' + $(this).attr("data-submenu") + '</header></div>');
                     }
                 });
             }
@@ -2075,7 +2031,7 @@ $(document).ready(function () {
                 $('.hpe-in-directory-category.hp-x').each(function () {
                     var dcid = $(this).attr('data-category-id');
                     if ($(this).children('.hp-y').children('.hp-z').length == 0) {
-                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + 'lid=Codes&lid2=&level=0&pform=codes&pkeyname=code_id&pkey=' + dcid + '&fkeyname=&fkey=&wpage=&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpx=codes#hpe_updatex\',\'iframe\');">' + pencil + '</a></div></div>');
+                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + 'lid=Codes&lid2=&level=0&pform=codes&pkeyname=code_id&pkey=' + dcid + '&fkeyname=&fkey=&wpage=&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpx=codes#hpe_updatex\',\'iframe\');">' + pencil + '</a></div></div>');
                     }
                 });
             }
@@ -2106,7 +2062,7 @@ $(document).ready(function () {
                             h.children[0].insertAdjacentHTML(`afterbegin`, `
                             <div class="hp-z">
                                 <div class="hp-span">
-                                    <a href="javascript:void(0);" onclick="OpenLbPopup('/${plist}lid=${h_lid}&x=&site=${wsite}&hpe=Y','iframe');">${pencil} Edit ${h_edit} </a>
+                                    <a href="javascript:void(0);" onclick="OpenLbPopup('/${plist}lid=${h_lid}&x=&site=${wsite}&sm=N&hpe=Y','iframe');">${pencil} Edit ${h_edit} </a>
                                 </div>
                             </div>`);
                         }
@@ -2122,7 +2078,7 @@ $(document).ready(function () {
                     var hvid = $(this).attr('data-article');
                     var isdate = $(this).attr('data-date');
                     if ($(this).children('.hp-y').children('.hp-z').length == 0) {
-                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Video" onclick="OpenLbPopup(\'/' + pfist + gallery + hvid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpx=hpe_video_g_yt_url#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Video" onclick="OpenLbPopup(\'/' + pfist + gallery + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&isdate=' + isdate + '#hpe_video_g_yt_urlxy$$' + vm + '&&' + vs + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Video" onclick="return confirmdelete(\'' + dl1 + ' Video' + dl2 + '\', \'/' + pdist + 'lid=Galleries&lid2=&level=0&pform=galleries&dname=Galleries&pkeyname=sys_information_id&pkey=' + hvid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div><header class="hp-hheader">VideoGallery - ' + $(this).attr("data-submenu") + '</header></div>');
+                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Video" onclick="OpenLbPopup(\'/' + pfist + gallery + hvid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpx=hpe_video_g_yt_url#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Video" onclick="OpenLbPopup(\'/' + pfist + gallery + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&isdate=' + isdate + '#hpe_video_g_yt_urlxy$$' + vm + '&&' + vs + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Video" onclick="return confirmdelete(\'' + dl1 + ' Video' + dl2 + '\', \'/' + pdist + 'lid=Galleries&lid2=&level=0&pform=galleries&dname=Galleries&pkeyname=sys_information_id&pkey=' + hvid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div><header class="hp-hheader">VideoGallery - ' + $(this).attr("data-submenu") + '</header></div>');
                     }
                 });
             }
@@ -2134,7 +2090,7 @@ $(document).ready(function () {
                     var hvid = $(this).attr('data-article');
                     var isdate = $(this).attr('data-date');
                     if ($(this).children('.hp-y').children('.hp-z').length == 0) {
-                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Video" onclick="OpenLbPopup(\'/' + pfist + gallery + hvid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpx=hpe_video_g_yt_code#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Video" onclick="OpenLbPopup(\'/' + pfist + gallery + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&isdate=' + isdate + '#hpe_video_g_yt_codexy$$' + vm + '&&' + vs + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Video" onclick="return confirmdelete(\'' + dl1 + ' Video' + dl2 + '\', \'/' + pdist + 'lid=Galleries&lid2=&level=0&pform=galleries&dname=Galleries&pkeyname=sys_information_id&pkey=' + hvid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div><header class="hp-hheader">VideoGallery - ' + $(this).attr("data-submenu") + '</header></div>');
+                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Video" onclick="OpenLbPopup(\'/' + pfist + gallery + hvid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpx=hpe_video_g_yt_code#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Video" onclick="OpenLbPopup(\'/' + pfist + gallery + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&isdate=' + isdate + '#hpe_video_g_yt_codexy$$' + vm + '&&' + vs + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Video" onclick="return confirmdelete(\'' + dl1 + ' Video' + dl2 + '\', \'/' + pdist + 'lid=Galleries&lid2=&level=0&pform=galleries&dname=Galleries&pkeyname=sys_information_id&pkey=' + hvid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div><header class="hp-hheader">VideoGallery - ' + $(this).attr("data-submenu") + '</header></div>');
                     }
                 });
             }
@@ -2146,7 +2102,7 @@ $(document).ready(function () {
                     var hvid = $(this).attr('data-article');
                     var isdate = $(this).attr('data-date');
                     if ($(this).children('.hp-y').children('.hp-z').length == 0) {
-                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Video" onclick="OpenLbPopup(\'/' + pfist + gallery + hvid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpx=hpe_video_g_yt_id#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Video" onclick="OpenLbPopup(\'/' + pfist + gallery + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&isdate=' + isdate + '#hpe_video_g_yt_idxy$$' + vm + '&&' + vs + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Video" onclick="return confirmdelete(\'' + dl1 + ' Video' + dl2 + '\', \'/' + pdist + 'lid=Galleries&lid2=&level=0&pform=galleries&dname=Galleries&pkeyname=sys_information_id&pkey=' + hvid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div><header class="hp-hheader">VideoGallery - ' + $(this).attr("data-submenu") + '</header></div>');
+                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Video" onclick="OpenLbPopup(\'/' + pfist + gallery + hvid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpx=hpe_video_g_yt_id#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Video" onclick="OpenLbPopup(\'/' + pfist + gallery + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&isdate=' + isdate + '#hpe_video_g_yt_idxy$$' + vm + '&&' + vs + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Video" onclick="return confirmdelete(\'' + dl1 + ' Video' + dl2 + '\', \'/' + pdist + 'lid=Galleries&lid2=&level=0&pform=galleries&dname=Galleries&pkeyname=sys_information_id&pkey=' + hvid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div><header class="hp-hheader">VideoGallery - ' + $(this).attr("data-submenu") + '</header></div>');
                     }
                 });
             }
@@ -2158,7 +2114,16 @@ $(document).ready(function () {
                     var hpid = $(this).attr('data-article');
                     var isdate = $(this).attr('data-date');
                     if ($(this).children('.hp-y').children('.hp-z').length == 0) {
-                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Photo" onclick="OpenLbPopup(\'/' + pfist + gallery + hpid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpx=hpe_photo#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Photo" onclick="OpenLbPopup(\'/' + pfist + gallery + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&isdate=' + isdate + '#hpe_photo_gxy$$' + pm + '&&' + ps + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Photo" onclick="return confirmdelete(\'' + dl1 + ' Photo' + dl2 + '\', \'/' + pdist + 'lid=Galleries&lid2=&level=0&pform=galleries&dname=Galleries&pkeyname=sys_information_id&pkey=' + hpid + '&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y\');">' + trash + '<b class="hp-llable">Delete</b></a></div></div>');
+                        $(this).children('.hp-y').append(`
+                        <div class="hp-z">
+                            <div class="hp-span">
+                                <a href="javascript:void(0);" ${btip} title="Edit Photo" onclick="OpenLbPopup('/${pfist}${gallery}${hpid}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&fpx=hpe_photo#hpe_updatex','iframe');">${pencil}<b class="hp-llable">Edit</b></a>
+                                
+                                <a href="javascript:void(0);" ${btip} title="Add New Photo" onclick="OpenLbPopup('/${pfist}${gallery}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y&fpx=hpe_photo&isdate=${isdate}#hpe_photo_gxy$$${pm}&&${ps}','iframe');">${plus}<b class="hp-llable">New</b></a>
+                                
+                                <a href="javascript:void(0);" ${btip} title="Delete Photo" onclick="return confirmdelete('${dl1} Photo${dl2} ', '/${pdist}lid=Galleries&lid2=&level=0&pform=galleries&dname=Galleries&pkeyname=sys_information_id&pkey=${hpid}&wpage=1&hpath=&sflag=&sortflag=&fa=&dflag=Y&smid=&u=&c=&lf=&x=&site=${wsite}&sm=N&hpe=Y');">${trash}<b class="hp-llable">Delete</b></a>
+                            </div>
+                        </div>`);
                     }
                 });
             }
@@ -2173,49 +2138,49 @@ $(document).ready(function () {
                     var durl = dlb + $(this).attr('data-url').replace(/.*\//, "") + '&site=' + wsite;
                     $(this).addClass('hp-ppp');
                     if ($(this).children('.hp-y').children('.hp-z').length == 0) {
-                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Article" onclick="OpenLbPopup(\'/' + pfist + article_pages + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpx=preview#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Article" onclick="OpenLbPopup(\'/' + pfist + article_pages + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y&fpx=artgroup&isdate=' + isdate + '#hpe_prevxy$$' + m + '&&' + s + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Article" onclick="return confirmdelete(\'' + dl1 + ' Article' + dl2 + '\', \'/' + pdist + 'lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=' + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&smx=Y&hpe=Y#hpe_deletex\');">' + trash + '<b class="hp-llable">Delete</b></a><a ' + btip + ' title="View Article" href="' + durl + '">' + link + '<b class="hp-llable">View</b></a></div><header class="hp-hheader">ArticleGroup - ' + $(this).attr("data-submenu") + '</header></div>');
+                        $(this).children('.hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" ' + btip + ' title="Edit Article" onclick="OpenLbPopup(\'/' + pfist + article_pages + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpx=preview#hpe_updatex\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a><a href="javascript:void(0);" ' + btip + ' title="Add New Article" onclick="OpenLbPopup(\'/' + pfist + article_pages + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y&fpx=artgroup&isdate=' + isdate + '#hpe_prevxy$$' + m + '&&' + s + '\',\'iframe\');">' + plus + '<b class="hp-llable">New</b></a><a href="javascript:void(0);" ' + btip + ' title="Delete Article" onclick="return confirmdelete(\'' + dl1 + ' Article' + dl2 + '\', \'/' + pdist + 'lid=Pages&lid2=&level=0&pform=pages&dname=Pages&pkeyname=sys_information_id&pkey=' + haid + '&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=' + wsite + '&sm=N&hpe=Y#hpe_deletex\');">' + trash + '<b class="hp-llable">Delete</b></a><a ' + btip + ' title="View Article" href="' + durl + '">' + link + '<b class="hp-llable">View</b></a></div><header class="hp-hheader">ArticleGroup - ' + $(this).attr("data-submenu") + '</header></div>');
                     }
                 });
             }
 
             // Hitcounter
             if ($('.hpe-hitcounter').length) {
-                $('.hpe-hitcounter.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + 'pform=options_systems&pkeyname=sys_option_system_id&pkey=1&smx=Y&x=&site=' + wsite + '&hpe=Y#hpe_hitcounter\',\'iframe\');" ' + btip + ' title="Edit Hit Counter">' + pencil + '<b class="hp-llable">Edit</b></a></div><header class="hp-hheader">Hit Counter</header></div>');
+                $('.hpe-hitcounter.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + 'pform=options_systems&pkeyname=sys_option_system_id&pkey=1&x=&site=' + wsite + '&sm=N&hpe=Y#hpe_hitcounter\',\'iframe\');" ' + btip + ' title="Edit Hit Counter">' + pencil + '<b class="hp-llable">Edit</b></a></div><header class="hp-hheader">Hit Counter</header></div>');
             }
 
             // Social
             if ($('.hpe-social').length) {
                 $('.hpe-social').addClass('hp-ppp');
                 var hlp = "Click on 'EDIT' button/icon and provide us social media links.<br>We will update it within few minutes."
-                $('.hpe-social.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&smx=Y&hpe=Y#hpe_social\',\'iframe\');" ' + btip + ' title="Edit Social Media Links">' + pencil + '<b class="hp-llable">Edit</b></a><a class="hp-help hp-tt" ' + btip + ' href="javascript:void(0);" ' + btip + ' title="' + hlp + '">' + info + '<b class="hp-llable">Help</b></a></div><header class="hp-hheader">Social Links</header></div>');
+                $('.hpe-social.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&sm=N&hpe=Y#hpe_social\',\'iframe\');" ' + btip + ' title="Edit Social Media Links">' + pencil + '<b class="hp-llable">Edit</b></a><a class="hp-help hp-tt" ' + btip + ' href="javascript:void(0);" ' + btip + ' title="' + hlp + '">' + info + '<b class="hp-llable">Help</b></a></div><header class="hp-hheader">Social Links</header></div>');
             }
 
             // Google Map
             if ($('.hpe-map').length) {
                 $('.hpe-map').addClass('hp-ppp');
                 var hlp = "Click on 'EDIT' button/icon and provide us your address.<br>We will update it within few minutes."
-                $('.hpe-map.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&smx=Y&hpe=Y#hpe_map\',\'iframe\');" ' + btip + ' title="Edit Address">' + pencil + '<b class="hp-llable">Edit</b></a><a class="hp-help hp-tt" ' + btip + ' href="javascript:void(0);" ' + btip + ' title="' + hlp + '">' + info + '<b class="hp-llable">Help</b></a></div><header class="hp-hheader">Map</header></div>');
+                $('.hpe-map.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&sm=N&hpe=Y#hpe_map\',\'iframe\');" ' + btip + ' title="Edit Address">' + pencil + '<b class="hp-llable">Edit</b></a><a class="hp-help hp-tt" ' + btip + ' href="javascript:void(0);" ' + btip + ' title="' + hlp + '">' + info + '<b class="hp-llable">Help</b></a></div><header class="hp-hheader">Map</header></div>');
             }
 
             // Bottom Links
             if ($('.hpe-bottom-links').length) {
                 $('.hpe-bottom-links').addClass('hp-ppp');
                 var hlp = "You can write us to add/update/delete links.";
-                $('.hpe-bottom-links.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&smx=Y&hpe=Y#hpe_bottom_links\',\'iframe\');" ' + btip + ' title="Edit Links">' + pencil + '<b class="hp-llable">Edit</b></a><a class="hp-help hp-tt" ' + btip + ' href="javascript:void(0);" ' + btip + ' title="' + hlp + '">' + info + '<b class="hp-llable">Help</b></a></div><header class="hp-hheader">Bottom Links</header></div>');
+                $('.hpe-bottom-links.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&sm=N&hpe=Y#hpe_bottom_links\',\'iframe\');" ' + btip + ' title="Edit Links">' + pencil + '<b class="hp-llable">Edit</b></a><a class="hp-help hp-tt" ' + btip + ' href="javascript:void(0);" ' + btip + ' title="' + hlp + '">' + info + '<b class="hp-llable">Help</b></a></div><header class="hp-hheader">Bottom Links</header></div>');
             }
 
             // Top Links
             if ($('.hpe-top-links').length) {
                 $('.hpe-top-links').addClass('hp-ppp');
                 var hlp = "You can write us to add/update/delete links.";
-                $('.hpe-top-links.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&smx=Y&hpe=Y#hpe_top_links\',\'iframe\');" ' + btip + ' title="Edit Links">' + pencil + '<b class="hp-llable">Edit</b></a><a class="hp-help hp-tt" ' + btip + ' href="javascript:void(0);" ' + btip + ' title="' + hlp + '">' + info + '<b class="hp-llable">Help</b></a></div><header class="hp-hheader">Top Links</header></div>');
+                $('.hpe-top-links.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&sm=N&hpe=Y#hpe_top_links\',\'iframe\');" ' + btip + ' title="Edit Links">' + pencil + '<b class="hp-llable">Edit</b></a><a class="hp-help hp-tt" ' + btip + ' href="javascript:void(0);" ' + btip + ' title="' + hlp + '">' + info + '<b class="hp-llable">Help</b></a></div><header class="hp-hheader">Top Links</header></div>');
             }
 
             // Google Custom Search
             if ($('.hpe-gsearch').length) {
                 $('.hpe-gsearch').addClass('hp-ppp');
                 let hlp = "Please write us if it will not show results from your site.";
-                $('.hpe-gsearch.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&smx=Y&hpe=Y#hpe_gsearch\',\'iframe\');" ' + btip + ' title="Any issues with Search?">' + pencil + '<b class="hp-llable">Edit</b></a><a class="hp-help hp-tt" ' + btip + ' href="javascript:void(0);" ' + btip + ' title="' + hlp + '">' + info + '<b class="hp-llable">Help</b></a></div><header class="hp-hheader">Search Bar</header></div>');
+                $('.hpe-gsearch.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&sm=N&hpe=Y#hpe_gsearch\',\'iframe\');" ' + btip + ' title="Any issues with Search?">' + pencil + '<b class="hp-llable">Edit</b></a><a class="hp-help hp-tt" ' + btip + ' href="javascript:void(0);" ' + btip + ' title="' + hlp + '">' + info + '<b class="hp-llable">Help</b></a></div><header class="hp-hheader">Search Bar</header></div>');
             }
 
             // Forms
@@ -2224,33 +2189,33 @@ $(document).ready(function () {
                 $('.hpe-formbody.hp-x .hp-y').append(`
                 <div class="hp-z">
                     <div class="hp-span">
-                        <a href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}${ticket}${wsite}&fpx=${fn}&smx=Y&hpe=Y#hpe_formbodys','iframe');">${pencil}<b class="hp-llable">Edit Form</b></a>                        
+                        <a href="javascript:void(0);" onclick="OpenLbPopup('/${pfist}${ticket}${wsite}&fpx=${fn}&sm=N&hpe=Y#hpe_formbodys','iframe');">${pencil}<b class="hp-llable">Edit Form</b></a>                        
                     </div>
                 </div>`);
             }
 
             // Service Package
             if ($('.hpe-sp').length) {
-                $('.hpe-sp.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&smx=Y&hpe=Y#hpe_spackages\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a></div></div>');
+                $('.hpe-sp.hp-x .hp-y').append('<div class="hp-z"><div class="hp-span"><a href="javascript:void(0);" onclick="OpenLbPopup(\'/' + pfist + ticket + wsite + '&sm=N&hpe=Y#hpe_spackages\',\'iframe\');">' + pencil + '<b class="hp-llable">Edit</b></a></div></div>');
             }
 
             // Custom Sections            
             // TEXT
             document.querySelectorAll(`[class*="hpe-custom-text-"]`).forEach((cus) => {
                 const key = cus.children[1].innerText.split("()")[0].split("Section")[1];
-                cus.children[0].insertAdjacentHTML(`afterbegin`, `<div class="hp-z"><div class="hp-span"><a ${btip} title="Edit" href="javascript:void(0);" onclick="OpenLbPopup(\'/${pfist}lid=Sections&lid2=&level=1&pform=sections&pkeyname=section_id&pkey=${key}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&fpx=cust_text&hpe=Y#hpe_updatex\',\'iframe\');">${pencil}<b class="hp-llable">Edit</b></a></div></div>`);
+                cus.children[0].insertAdjacentHTML(`afterbegin`, `<div class="hp-z"><div class="hp-span"><a ${btip} title="Edit" href="javascript:void(0);" onclick="OpenLbPopup(\'/${pfist}lid=Sections&lid2=&level=1&pform=sections&pkeyname=section_id&pkey=${key}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&fpx=cust_text&sm=N&hpe=Y#hpe_updatex\',\'iframe\');">${pencil}<b class="hp-llable">Edit</b></a></div></div>`);
             });
 
             // HTML
             document.querySelectorAll(`[class*="hpe-custom-html-"]`).forEach((cus) => {
                 const key = cus.children[1].innerText.split("()")[0].split("Section")[1];
-                cus.children[0].insertAdjacentHTML(`afterbegin`, `<div class="hp-z"><div class="hp-span"><a ${btip} title="Edit" href="javascript:void(0);" onclick="OpenLbPopup(\'/${pfist}lid=Sections&lid2=&level=1&pform=sections&pkeyname=section_id&pkey=${key}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&fpx=cust_html&hpe=Y#hpe_updatex\',\'iframe\');">${pencil}<b class="hp-llable">Edit</b></a></div></div>`);
+                cus.children[0].insertAdjacentHTML(`afterbegin`, `<div class="hp-z"><div class="hp-span"><a ${btip} title="Edit" href="javascript:void(0);" onclick="OpenLbPopup(\'/${pfist}lid=Sections&lid2=&level=1&pform=sections&pkeyname=section_id&pkey=${key}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&fpx=cust_html&sm=N&hpe=Y#hpe_updatex\',\'iframe\');">${pencil}<b class="hp-llable">Edit</b></a></div></div>`);
             });
 
             // Image
             document.querySelectorAll(`[class*="hpe-custom-img-"]`).forEach((cus) => {
                 const key = cus.children[1].innerText.split("()")[0].split("Section")[1];
-                cus.children[0].insertAdjacentHTML(`afterbegin`, `<div class="hp-z"><div class="hp-span"><a ${btip} title="Edit" href="javascript:void(0);" onclick="OpenLbPopup(\'/${pfist}lid=Sections&lid2=&level=1&pform=sections&pkeyname=section_id&pkey=${key}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&fpx=cust_img&hpe=Y#hpe_updatex\',\'iframe\');">${pencil}<b class="hp-llable">Edit</b></a></div></div>`);
+                cus.children[0].insertAdjacentHTML(`afterbegin`, `<div class="hp-z"><div class="hp-span"><a ${btip} title="Edit" href="javascript:void(0);" onclick="OpenLbPopup(\'/${pfist}lid=Sections&lid2=&level=1&pform=sections&pkeyname=section_id&pkey=${key}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&fpx=cust_img&sm=N&hpe=Y#hpe_updatex\',\'iframe\');">${pencil}<b class="hp-llable">Edit</b></a></div></div>`);
             });
 
             // Weather Widget
@@ -2260,7 +2225,7 @@ $(document).ready(function () {
                 cus.children[0].insertAdjacentHTML(`afterbegin`, `
                     <div class="hp-z">
                         <div class="hp-span">
-                            <a ${btip} title="Edit" href="javascript:void(0);" onclick="OpenLbPopup(\'/${pfist}lid=Sections&lid2=&level=1&pform=sections&pkeyname=section_id&pkey=${key}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&smx=Y&fpx=weather&hpe=Y#hpe_updatex\',\'iframe\');">${pencil}<b class="hp-llable">Edit</b></a>
+                            <a ${btip} title="Edit" href="javascript:void(0);" onclick="OpenLbPopup(\'/${pfist}lid=Sections&lid2=&level=1&pform=sections&pkeyname=section_id&pkey=${key}&fkeyname=&fkey=&wpage=1&hpath=&eflag=Yes&fa=&sflag=&sortflag=&smid=&u=&c=&lf=&x=&site=${wsite}&fpx=weather&sm=N&hpe=Y#hpe_updatex\',\'iframe\');">${pencil}<b class="hp-llable">Edit</b></a>
                             <a class="hp-help hp-tt" ${btip} href="javascript:void(0);" ${btip} title="${hlp}">${info}<b class="hp-llable">Help</b></a>
                         </div>
                         <header class="hp-hheader">Weather</header>                        
@@ -2518,14 +2483,14 @@ $(document).ready(function () {
 
 
         }, 500, 5);
-    } 
-    
+    }
+
     // disable LiveEditor on mobile
     else if (stringInURL(`${lb.he}.`)) {
-        
+
         const site = `https://${getParam("site")}`;
         document.title = "Not Supported";
-        document.querySelector(`.hpx-loader`).style.display = `none`;        
+        document.querySelector(`.hpx-loader`).style.display = `none`;
         document.querySelector(`.hpx-wrapper`).remove();
         document.querySelector(".hpx-main").style.overflow = `hidden`;
         document.querySelector(".hpx-main").insertAdjacentHTML("afterbegin", `
@@ -2536,8 +2501,8 @@ $(document).ready(function () {
                     <path d="M7.002 11a1 1 0 1 1 2 0 1 1 0 0 1-2 0zM7.1 4.995a.905.905 0 1 1 1.8 0l-.35 3.507a.552.552 0 0 1-1.1 0L7.1 4.995z"/>
                 </svg>
             </p>
-            <p class="le-message-1">At the moment, editing your website is not supported on mobile device.</p>
-            <p class="le-message-2">Please sign in to your site from desktop or laptop. And remember, your website looks stunning on all devices. </p>
+            <p class="le-message-1">At the moment,Â editing your websiteÂ is not supported on mobile device.</p>
+            <p class="le-message-2">Please sign in to your site from desktop or laptop. And remember, your website looks stunning on all devices.Â </p>
             <p class="le-message-button"><a href="${site}">OK</a></p>
         </div>`);
     }
@@ -2572,17 +2537,13 @@ $(document).ready(function () {
     const pext = '.a' + sx.lngl;
     const dplb = 'https://' + location.href.match(/:\/\/(.[^/]+)/)[1];
 
-    // get domain
-
-    let domainName = document.domain;
-
     // #general# changes 
-    if (!stringInURL('&sm=Y') && !stringInURL(`loginstaff${pext}?site=`) && !stringInURL(`login${pext}?site=`) && readCookie("AppServer").includes(domainName)) {
+    if (!stringInURL('&sm=Y') && stringInURL('&sm=N') && !stringInURL(`loginstaff${pext}?site=`) && !stringInURL(`login${pext}?site=`)) {
 
         // get site
-        const lhr = location.href;
-        const lhurl = new URL(lhr);
-        const surlw = lhurl.searchParams.get("site");
+        // const lhr = location.href;
+        // const lhurl = new URL(lhr);
+        const surlw = getParam("site");
         let wd = '_' + surlw.split('.').shift();
         if (surlw.includes('/')) {
 
@@ -2592,7 +2553,7 @@ $(document).ready(function () {
         }
 
         // upload image place-holder
-        document.querySelectorAll(".input.input-file input[readonly]").forEach((p) => p.placeholder = "Upload Image");
+        document.querySelectorAll(".input.input-file input[readonly]").forEach((p) => p.placeholder = "Upload Photo");
 
         document.querySelector('.smcommonbody') && (document.querySelector('.smcommonbody').style.backgroundImage = '');
         classIdExist_addClass('.my-form', 'hpe-my-form');
@@ -3194,7 +3155,7 @@ $(document).ready(function () {
 
             // #product#
             // new product
-            if (stringInURL("#hpe_productxy") && stringInURL("?lid=Products&") && stringInURL("&eflag=") && stringInURL("&pkey=&") && stringInURL("smx=Y")) {
+            if (stringInURL("#hpe_productxy") && stringInURL("?lid=Products&") && stringInURL("&eflag=") && stringInURL("&pkey=&") && stringInURL("&sm=N")) {
 
                 if (document.querySelector('#submit1') || document.querySelector('#submit2')) {
 
@@ -3275,16 +3236,22 @@ $(document).ready(function () {
 
                         headerSet('Photo');
                         fieldChange2('Body', 'Body');
+                        hideField('* Issue Date');
+                        hideField('Starting Date');
+                        hideField('Ending Date');
                         hideField('Body');
+                        hideField('* Active');
                         showField('Picture');
                         showField('Picture Caption');
+                        fieldChange('Picture', 'Photo');
+                        fieldChange('Picture Caption', 'Photo Caption');
 
                     }
 
                     // new video/photo
                     if (stringInURL("#hpe_video_g_yt_urlxy$$") || stringInURL("#hpe_video_g_yt_idxy$$") || stringInURL("#hpe_video_g_yt_codexy$$") || stringInURL("#hpe_photo_gxy$$")) {
 
-                        menuSelect();
+                        //menuSelect();
                         issueDateSelect();
                         clearEndingDate();
 
