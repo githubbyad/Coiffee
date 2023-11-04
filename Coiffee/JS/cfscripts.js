@@ -2,7 +2,7 @@
 const currentURL = window.location.href;
 const htmlTag = document.querySelector(`html`);
 const liveEditorPage = `hpeditor.`;
-const defaultApp = `.ONE`;
+const defaultApp = `ONE`;
 const homeId = `1`;
 
 // get paramerter value from URL
@@ -32,6 +32,7 @@ if (window.location.href.includes(liveEditorPage)) {
     document.querySelector("html").insertAdjacentElement("beforeend", ufields);
 }
 
+// full site loaded
 document.addEventListener("DOMContentLoaded", () => {
 
     // loader
@@ -113,6 +114,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
+    // powered by line
+    document.querySelector("coiffee") && (document.querySelector("coiffee").innerHTML = `Powered by <span class="text-theme"><i class="bi bi-cup-hot-fill"></i> Coiffee</span>`);
 
     // go to top scrolling
     const goTop = document.querySelector(".cus-scroll-top");
@@ -179,14 +182,53 @@ document.addEventListener("DOMContentLoaded", () => {
 
     }
 
-
 });
+
+// after full load completed
+document.addEventListener('readystatechange', event => {
+    if (event.target.readyState === "complete") {
+        if (!window.location.href.includes(liveEditorPage)) {
+
+            // add email link
+            const emailLink = email => {
+                if (document.querySelector(email)) {
+                    document.querySelectorAll(email).forEach(e => {
+                        let text = e.innerText.trim();
+                        if (text != "") {
+                            e.setAttribute(`onclick`, `window.open('mailto:${text}', '_self')`);
+                            e.style.cursor = "pointer";
+                        }
+                    });
+                }
+            }
+            const emailClasses = ["cus-email", "cus-top-email", "cus-bottom-email"];
+            emailClasses.forEach(e => emailLink(`.${e}`));
+
+            // add phone link
+            const phoneLink = phone => {
+                if (document.querySelector(phone)) {
+                    document.querySelectorAll(phone).forEach(p => {
+                        let text = p.innerText.trim().replace(/\s/g, "").replace(/-/g, "");
+                        if (text != "") {
+                            p.setAttribute(`onclick`, `window.open('tel:${text}','_self')`);
+                            p.style.cursor = "pointer";
+                        }
+                    });
+                }
+            }
+            const phoneClasses = ["cus-phone", "cus-top-phone", "cus-bottom-phone"];
+            phoneClasses.forEach(p => phoneLink(`.${p}`));
+
+        }
+    }
+});
+
 
 
 // iframe src changes and resize
 const changeFrameSRC = frame => {
     let appSrv = readCookie("AppServer"); /* get appServer */
-    appSrv = appSrv ?? `https://bulletlink.${defaultApp.toLocaleLowerCase()}`;
+    appSrv = appSrv ?? `https://bulletlink.${defaultApp.toLocaleLowerCase()}/`;
     if (!frame.src.includes("&pform")) { /* if src is blank */
         frame.src = appSrv + frame.getAttribute("data-url");
         setTimeout(() => iFrameResize({ log: true }, frame), 1000); /* resize iFrame */
